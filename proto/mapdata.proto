@@ -1,0 +1,156 @@
+syntax = "proto3";
+
+package karcher;
+
+message MapExtInfo {
+    int32 taskBeginDate = 1;
+    int32 mapUploadDate = 2;
+    int32 mapValid = 3;
+    float angle = 4;
+}
+
+message MapHeadInfo {
+    int32 mapHeadId = 1;
+    int32 sizeX = 2;
+    int32 sizeY = 3;
+    float minX = 4;
+    float minY = 5;
+    float maxX = 6;
+    float maxY = 7;
+    float resolution = 8;
+}
+
+message MapDataInfo {
+    bytes mapData = 1;
+}
+
+message AllMapInfo {
+    int32 mapHeadId = 1;
+    string mapName = 2;
+}
+
+message DeviceCoverPointDataInfo {
+    int32 update = 1;
+    float x = 2;
+    float y = 3;
+}
+
+message DeviceHistoryPoseInfo {
+    int32 poseId = 1;
+    repeated DeviceCoverPointDataInfo points = 2;
+}
+
+message DevicePoseDataInfo {
+    float x = 1;
+    float y = 2;   
+    float phi = 3;
+}
+
+message DeviceCurrentPoseInfo {
+    int32 poseId = 1;
+    int32 update = 2;
+    float x = 3;
+    float y = 4;
+    float phi = 5;
+}
+
+message DevicePointInfo {
+    float x = 1;
+    float y = 2;
+}
+
+message DeviceAreaDataInfo {
+    int32 status = 1;
+    int32 type = 2;
+    int32 areaIndex = 3;
+    repeated DevicePointInfo points = 4;
+}
+
+message DeviceNavigationPointDataInfo {
+    int32 pointId = 1;
+    int32 status = 2;
+    int32 pointType = 3;
+    float x = 4;
+    float y = 5;
+    float phi = 6;
+}
+
+message CleanPerferenceDataInfo {
+    int32 cleanMode = 1;
+    int32 waterLevel = 2;
+    int32 windPower = 3;
+    int32 twiceClean = 4;
+}
+
+message RoomDataInfo {
+    int32 roomId = 1;
+    string roomName = 2;
+    int32 roomTypeId = 3;
+    int32 meterialId = 4;
+    int32 cleanState = 5;
+    int32 roomClean = 6;
+    int32 roomCleanIndex = 7;
+    DevicePointInfo roomNamePost = 8;
+    CleanPerferenceDataInfo cleanPerfer = 9;
+    int32 colorId = 10;
+}
+
+message DeviceRoomMatrix {
+    bytes matrix = 1;
+}
+
+message DeviceChainPointDataInfo {
+    int32 x = 1;
+    int32 y = 2;
+    int32 value = 3;
+}
+
+message DeviceRoomChainDataInfo {
+    int32 roomId = 1;
+    repeated DeviceChainPointDataInfo points = 2;
+}
+
+message ObjectDataInfo {
+    int32 objectId = 1;
+    int32 objectTypeId = 2;
+    string objectName = 3;
+    int32 confirm = 4;
+    float x = 5;
+    float y = 6;
+    string url = 7;
+}
+
+message FurnitureDataInfo {
+    int32 id = 1;
+    int32 typeId = 2;
+    repeated DevicePointInfo points = 3;
+    string url = 4;
+}
+
+message HouseInfo {
+    int32 id = 1;
+    string name = 2;
+    int32 curMapCount = 3;
+    int32 maxMapSize = 4;
+    repeated AllMapInfo maps = 5;
+}
+
+message RobotMap {
+    int32 mapType = 1;
+    MapExtInfo mapExtInfo = 2;
+    MapHeadInfo mapHead = 3;
+    MapDataInfo mapData = 4;
+    repeated AllMapInfo mapInfo = 5;
+    DeviceHistoryPoseInfo historyPose = 6;
+    DevicePoseDataInfo chargeStation = 7;
+    DeviceCurrentPoseInfo currentPose = 8;
+    repeated DeviceAreaDataInfo virtualWalls = 9;
+    repeated DeviceAreaDataInfo areasInfo = 10;
+    repeated DeviceNavigationPointDataInfo navigationPoints = 11;
+    repeated RoomDataInfo roomDataInfo = 12;
+    DeviceRoomMatrix roomMatrix = 13;
+    repeated DeviceRoomChainDataInfo roomChain = 14;
+    repeated ObjectDataInfo objects = 15;
+    repeated FurnitureDataInfo furnitureInfo = 16;
+    repeated HouseInfo houseInfos = 17;
+}
