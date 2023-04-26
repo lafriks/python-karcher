@@ -5,6 +5,7 @@
 
 from enum import Enum
 
+
 class Region(str, Enum):
     """Region enum.
 
@@ -13,6 +14,7 @@ class Region(str, Enum):
     EU = 'eu'
     US = 'us'
     CN = 'cn'
+
 
 class Language(int, Enum):
     """Language enum.
@@ -57,12 +59,14 @@ class Language(int, Enum):
         else:
             return 'en'
 
+
 class Product(str, Enum):
     """Product model enum."""
 
     RCV3 = '1528986273083777024'
     RCV5 = '1540149850806333440'
     RCF5 = '1599715149861306368'
+
 
 REGION_URLS = {
     Region.EU: "https://eu-appaiot.3irobotix.net",

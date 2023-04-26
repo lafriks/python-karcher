@@ -9,11 +9,15 @@ import requests
 import urllib.parse
 
 from .auth import Domains, Session
-from .consts import APP_VERSION_CODE, APP_VERSION_NAME, PROJECT_TYPE, PROTOCOL_VERSION, REGION_URLS, TENANT_ID, Region, Language
+from .consts import APP_VERSION_CODE, APP_VERSION_NAME, PROJECT_TYPE, \
+    PROTOCOL_VERSION, REGION_URLS, TENANT_ID, \
+    Region, Language
 from .device import Device
 from .exception import KarcherHomeAccessDenied, KarcherHomeException, handle_error_code
 from .map import Map
-from .utils import decrypt, decrypt_map, encrypt, get_nonce, get_random_string, get_timestamp, is_email, md5
+from .utils import decrypt, decrypt_map, encrypt, get_nonce, get_random_string, \
+    get_timestamp, is_email, md5
+
 
 class KarcherHome:
     """Main class to access Karcher Home Robots API"""
@@ -94,13 +98,15 @@ class KarcherHome:
 
         resp = session.get(url, headers=headers)
         if resp.status_code != 200:
-            raise KarcherHomeException(-1, 'HTTP error: ' + str(resp.status_code))
+            raise KarcherHomeException(-1,
+                                       'HTTP error: ' + str(resp.status_code))
 
         return resp.content
 
-    def _process_response(self, resp, prop = None):
+    def _process_response(self, resp, prop=None):
         if resp.status_code != 200:
-            raise KarcherHomeException(-1, 'HTTP error: ' + str(resp.status_code))
+            raise KarcherHomeException(-1,
+                                       'HTTP error: ' + str(resp.status_code))
         data = resp.json()
         # Check for error response
         if data['code'] != 0:
@@ -112,7 +118,7 @@ class KarcherHome:
         result = data['result']
         if type(result) == str:
             raise KarcherHomeException(-2, 'Invalid response: ' + result)
-        if prop != None:
+        if prop is not None:
             return json.loads(decrypt(result[prop]))
         return result
 
@@ -128,7 +134,7 @@ class KarcherHome:
         d = self._process_response(resp, 'domain')
         return Domains(**d)
 
-    def login(self, username, password, register_id = None):
+    def login(self, username, password, register_id=None):
         """Login using provided credentials."""
 
         if register_id is None or register_id == '':
@@ -164,14 +170,15 @@ class KarcherHome:
 
     def logout(self, sess: Session):
         """End current session.
-        
+
         This will also reset the session object.
         """
         if sess.auth_token == '' or sess.user_id == '':
             sess.reset()
             return
-        
-        self._process_response(self._request(sess, 'POST', '/user-center/auth/logout'))
+
+        self._process_response(self._request(
+            sess, 'POST', '/user-center/auth/logout'))
         sess.reset()
 
     def get_devices(self, sess: Session):
@@ -180,21 +187,26 @@ class KarcherHome:
         if sess is None or sess.auth_token == '' or sess.user_id == '':
             raise KarcherHomeAccessDenied('Not authorized')
 
-        resp = self._request(sess, 'GET', '/smart-home-service/smartHome/user/getDeviceInfoByUserId/' + sess.user_id)
+        resp = self._request(
+            sess, 'GET',
+            '/smart-home-service/smartHome/user/getDeviceInfoByUserId/' + sess.user_id)
 
         return [Device(**d) for d in self._process_response(resp)]
 
     def get_map_data(self, sess: Session, dev: Device, map: int = 1):
         # <tenantId>/<modeType>/<deviceSn>/01-01-2022/map/temp/0046690461_<deviceSn>_1
         mapDir = TENANT_ID + '/' + dev.product_mode_code + '/' +\
-            dev.sn + '/01-01-2022/map/temp/0046690461_' + dev.sn + '_' + str(map)
+            dev.sn + '/01-01-2022/map/temp/0046690461_' + \
+            dev.sn + '_' + str(map)
 
-        resp = self._request(sess, 'POST', '/storage-management/storage/aws/getAccessUrl', json={
-            'dir': mapDir,
-            'countryCode': sess.get_country_code(),
-            'serviceType': 2,
-            'tenantId': TENANT_ID,
-        })
+        resp = self._request(sess, 'POST',
+                             '/storage-management/storage/aws/getAccessUrl',
+                             json={
+                                 'dir': mapDir,
+                                 'countryCode': sess.get_country_code(),
+                                 'serviceType': 2,
+                                 'tenantId': TENANT_ID,
+                             })
 
         d = self._process_response(resp)
         downloadUrl = d['url']
@@ -207,21 +219,3 @@ class KarcherHome:
             return Map.parse(data)
         else:
             return json.loads(data)
-
-    def get_families(self, sess: Session):
-
-        if sess is None or sess.auth_token == '' or sess.user_id == '':
-            raise KarcherHomeAccessDenied('Not authorized')
-        
-        resp = self._request(sess, 'GET', '/smart-home-service/smartHome/familyInfo/list/' + sess.user_id)
-
-        return self._process_response(resp)
-
-    def get_consumables(self, sess: Session, familyID: str):
-
-        if sess is None or sess.auth_token == '' or sess.user_id == '':
-            raise KarcherHomeAccessDenied('Not authorized')
-        
-        resp = self._request(sess, 'GET', '/smart-home-service/smartHome/consumablesInfo/getConsumablesInfoByFamilyId/' + familyID)
-
-        return self._process_response(resp)

@@ -25,7 +25,11 @@ class EnhancedJSONEncoder(json.JSONEncoder):
         return super().default(o)
 
 class GlobalContextObject:
-    def __init__(self, debug: int = 0, output: str = "json", region: Region = Region.EU):
+    def __init__(self,
+        debug: int = 0,
+        output: str = "json",
+        region: Region = Region.EU
+    ):
         self.debug = debug
         self.output = output
         self.region = region
@@ -104,9 +108,9 @@ def devices(ctx: click.Context, username: str, password: str, token: str):
 
     kh = KarcherHome(region=ctx.obj.region)
     sess = None
-    if token != None:
+    if token is not None:
         sess = Session.from_token(token, '')
-    elif username != None and password != None:
+    elif username is not None and password is not None:
         sess = kh.login(username, password)
     else:
         raise click.BadParameter('Must provide either token or username and password.')
@@ -114,7 +118,7 @@ def devices(ctx: click.Context, username: str, password: str, token: str):
     devices = kh.get_devices(sess)
 
     # Logout if we used a username and password
-    if token == None:
+    if token is None:
         kh.logout(sess)
 
     ctx.obj.print(devices)

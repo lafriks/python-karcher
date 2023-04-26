@@ -1,7 +1,13 @@
+# -----------------------------------------------------------
+# Copyright (c) 2023 Lauris BH
+# SPDX-License-Identifier: MIT
+# -----------------------------------------------------------
+
 from google.protobuf.json_format import MessageToDict
 
 from . import mapdata_pb2
 from .utils import snake_case, snake_case_fields
+
 
 class Map:
     @staticmethod

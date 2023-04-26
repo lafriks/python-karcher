@@ -11,10 +11,12 @@ from typing import List
 from .consts import Product
 from .utils import snake_case
 
+
 class DeviceStatus(int, Enum):
     """Device status enum."""
     Offline = 0
     Online = 1
+
 
 @dataclass(init=False)
 class DeviceVersion:
@@ -33,6 +35,7 @@ class DeviceVersion:
             k = snake_case(k)
             if k in names:
                 setattr(self, k, v)
+
 
 @dataclass(init=False)
 class Device:

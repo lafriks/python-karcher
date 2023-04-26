@@ -28,14 +28,17 @@ class KarcherHomeAccessDenied(KarcherHomeException):
         self.message = message
         super().__init__(608, self.message)
 
+
 def handle_error_code(code, message):
     if code == 608:
         raise KarcherHomeAccessDenied('Forbidden')
     elif code == 609:
-        raise KarcherHomeAccessDenied('Unauthorized or authorization expired, please log in again')
+        raise KarcherHomeAccessDenied(
+            'Unauthorized or authorization expired, please log in again')
     elif code == 613:
         raise KarcherHomeException(613, 'Invalid token')
     elif code == 620:
-        raise KarcherHomeException(620, 'The username or password is incorrect')
+        raise KarcherHomeException(
+            620, 'The username or password is incorrect')
     else:
         raise KarcherHomeException(code, message)
