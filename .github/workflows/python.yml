@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ruff
+          pip install ruff twine
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Lint
@@ -31,3 +31,8 @@ jobs:
       - name: Test
         run: |
           python -m unittest discover -s ./tests  -p 'test_*.py'
+
+      - name: Package
+        run: |
+          python -m build
+          python -m twine check dist/*
