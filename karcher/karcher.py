@@ -45,10 +45,10 @@ class KarcherHome:
 
         headers['User-Agent'] = 'Android_' + TENANT_ID
         auth = ''
-        if sess != None and sess.auth_token != '':
+        if sess is not None and sess.auth_token != '':
             auth = sess.auth_token
             headers['authorization'] = auth
-        if sess != None and sess.user_id != '':
+        if sess is not None and sess.user_id != '':
             headers['id'] = sess.user_id
         headers['tenantId'] = TENANT_ID
 
@@ -69,7 +69,7 @@ class KarcherHome:
                 v = collections.OrderedDict(v.items())
                 for key, val in v.items():
                     data += key
-                    if val == None:
+                    if val is None:
                         data += 'null'
                     elif type(val) == str:
                         data += val
@@ -131,7 +131,7 @@ class KarcherHome:
     def login(self, username, password, register_id = None):
         """Login using provided credentials."""
 
-        if register_id == None or register_id == '':
+        if register_id is None or register_id == '':
             register_id = get_random_string(19)
 
         if not is_email(username):
@@ -177,7 +177,7 @@ class KarcherHome:
     def get_devices(self, sess: Session):
         """Get all user devices."""
 
-        if sess == None or sess.auth_token == '' or sess.user_id == '':
+        if sess is None or sess.auth_token == '' or sess.user_id == '':
             raise KarcherHomeAccessDenied('Not authorized')
 
         resp = self._request(sess, 'GET', '/smart-home-service/smartHome/user/getDeviceInfoByUserId/' + sess.user_id)
@@ -210,7 +210,7 @@ class KarcherHome:
 
     def get_families(self, sess: Session):
 
-        if sess == None or sess.auth_token == '' or sess.user_id == '':
+        if sess is None or sess.auth_token == '' or sess.user_id == '':
             raise KarcherHomeAccessDenied('Not authorized')
         
         resp = self._request(sess, 'GET', '/smart-home-service/smartHome/familyInfo/list/' + sess.user_id)
@@ -219,7 +219,7 @@ class KarcherHome:
 
     def get_consumables(self, sess: Session, familyID: str):
 
-        if sess == None or sess.auth_token == '' or sess.user_id == '':
+        if sess is None or sess.auth_token == '' or sess.user_id == '':
             raise KarcherHomeAccessDenied('Not authorized')
         
         resp = self._request(sess, 'GET', '/smart-home-service/smartHome/consumablesInfo/getConsumablesInfoByFamilyId/' + familyID)

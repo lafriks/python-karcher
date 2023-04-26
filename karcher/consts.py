@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 # -----------------------------------------------------------
 
-from enum import Enum, auto
+from enum import Enum
 
 class Region(str, Enum):
     """Region enum.

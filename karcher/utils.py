@@ -62,7 +62,7 @@ def decrypt_map(sn: str, mac: str, product_id: Product, data: bytes):
     buf = cipher.decrypt(base64.b64decode(data))
     try:
         return zlib.decompress(bytes.fromhex(str(buf[:-ord(buf[-1:])], 'utf-8')))
-    except:
+    except Exception:
         return bytes.fromhex(str(buf[:-ord(buf[-1:])], 'utf-8'))
 
 def md5(data):
@@ -71,7 +71,7 @@ def md5(data):
     return m.hexdigest()
 
 def is_email(email):
-    return re.search("^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$", email) != None
+    return re.search("^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$", email) is not None
 
 def snake_case(value):
     first_underscore = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', value)
