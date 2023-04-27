@@ -35,8 +35,8 @@ Commands:
 from karcher.karcher import KarcherHome
 
 kh = KarcherHome()
-sess = kh.login("user@email", "password")
-devices = hk.get_devices(sess)
+kh.login("user@email", "password")
+devices = hk.get_devices()
 ```
 
 ## License
