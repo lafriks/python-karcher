@@ -18,15 +18,17 @@ Usage: karcher-home [OPTIONS] COMMAND [ARGS]...
   Tool for connectiong and getting information from Kärcher Home Robots.
 
 Options:
-  -d, --debug
+  -d, --debug                     Enable debug mode.
   -o, --output [json|json_pretty]
-  -r, --region [eu|us|cn]         Region of the server to query. Default: 'eu'
+                                  Output format. Default: "json"
+  -r, --region [eu|us|cn]         Region of the server to query. Default: "eu"
   --help                          Show this message and exit.
 
 Commands:
-  devices   List all devices.
-  get-urls  Get region information.
-  login     Get user session tokens.
+  device-properties  Get device properties.
+  devices            List all devices.
+  login              Get user session tokens.
+  urls               Get region information.
 ```
 
 ### From code
