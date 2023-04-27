@@ -26,11 +26,11 @@ class EnhancedJSONEncoder(json.JSONEncoder):
 
 
 class GlobalContextObject:
-    def __init__(self,
-                 debug: int = 0,
-                 output: str = 'json',
-                 region: Region = Region.EU
-                 ):
+    def __init__(
+            self,
+            debug: int = 0,
+            output: str = 'json',
+            region: Region = Region.EU):
         self.debug = debug
         self.output = output
         self.region = region
@@ -46,7 +46,7 @@ class GlobalContextObject:
 
 
 @click.group()
-@click.option('-d', '--debug', is_flag=True)
+@click.option('-d', '--debug', is_flag=True, help='Enable debug mode.')
 @click.option(
     '-o',
     '--output',
@@ -84,7 +84,7 @@ def safe_cli():
 
 @cli.command()
 @click.pass_context
-def get_urls(ctx: click.Context):
+def urls(ctx: click.Context):
     """Get region information."""
 
     kh = KarcherHome(region=ctx.obj.region)
@@ -107,7 +107,7 @@ def login(ctx: click.Context, username: str, password: str):
 @cli.command()
 @click.option('--username', '-u', default=None, help='Username to login with.')
 @click.option('--password', '-p', default=None, help='Password to login with.')
-@click.option('--token', '-t', default=None, help='Authorization token.')
+@click.option('--auth-token', '-t', default=None, help='Authorization token.')
 @click.pass_context
 def devices(ctx: click.Context, username: str, password: str, token: str):
     """List all devices."""
@@ -128,3 +128,46 @@ def devices(ctx: click.Context, username: str, password: str, token: str):
         kh.logout()
 
     ctx.obj.print(devices)
+
+
+@cli.command()
+@click.option('--username', '-u', default=None, help='Username to login with.')
+@click.option('--password', '-p', default=None, help='Password to login with.')
+@click.option('--auth-token', '-t', default=None, help='Authorization token.')
+@click.option('--mqtt-token', '-m', default=None, help='MQTT authorization token.')
+@click.option('--device-id', '-d', required=True, help='Device ID.')
+@click.pass_context
+def device_properties(
+        ctx: click.Context,
+        username: str,
+        password: str,
+        auth_token: str,
+        mqtt_token: str,
+        device_id: str):
+    """Get device properties."""
+
+    kh = KarcherHome(region=ctx.obj.region)
+    if auth_token is not None:
+        kh.login_token(auth_token, mqtt_token)
+    elif username is not None and password is not None:
+        kh.login(username, password)
+    else:
+        raise click.BadParameter(
+            'Must provide either token or username and password.')
+
+    dev = None
+    for device in kh.get_devices():
+        if device.device_id == device_id:
+            dev = device
+            break
+
+    if dev is None:
+        raise click.BadParameter('Device ID not found.')
+
+    props = kh.get_device_properties(dev)
+
+    # Logout if we used a username and password
+    if auth_token is None:
+        kh.logout()
+
+    ctx.obj.print(props)

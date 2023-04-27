@@ -5,6 +5,7 @@
 
 import collections
 import json
+import threading
 import requests
 import urllib.parse
 
@@ -15,7 +16,7 @@ from .consts import APP_VERSION_CODE, APP_VERSION_NAME, PROJECT_TYPE, \
 from .device import Device, DeviceProperties
 from .exception import KarcherHomeAccessDenied, KarcherHomeException, handle_error_code
 from .map import Map
-from .mqtt import MqttClient, get_device_topics
+from .mqtt import MqttClient, get_device_topic_property_get_reply, get_device_topics
 from .utils import decrypt, decrypt_map, encrypt, get_nonce, get_random_string, \
     get_timestamp, get_timestamp_ms, is_email, md5
 
@@ -33,6 +34,7 @@ class KarcherHome:
         self._session = None
         self._mqtt = None
         self._device_props = {}
+        self._wait_events = {}
 
         d = self.get_urls()
         # Update base URLs
@@ -126,7 +128,7 @@ class KarcherHome:
             return json.loads(decrypt(result[prop]))
         return result
 
-    def _mqtt_connect(self):
+    def _mqtt_connect(self, wait_for_connect=False):
         if self._session is None \
                 or self._session.mqtt_token == '' or self._session.user_id == '':
             raise KarcherHomeAccessDenied('Not authorized')
@@ -141,8 +143,19 @@ class KarcherHome:
             port=u.port,
             username=self._session.user_id,
             password=self._session.mqtt_token)
+
+        # Special logic for waiting for connection
+        event = None
+        if wait_for_connect:
+            event = threading.Event()
+            self._mqtt.on_connect = lambda: event.set()
+
         self._mqtt.connect()
         self._mqtt.on_message = self._process_mqtt_message
+
+        if wait_for_connect:
+            event.wait()
+            self._mqtt.on_connect = None
 
     def get_urls(self):
         """Get URLs for API and MQTT."""
@@ -293,11 +306,15 @@ class KarcherHome:
 
         if sn is None:
             # Ignore messages for devices we have not subscribed to
+            if topic in self._wait_events:
+                self._wait_events[topic].set()
             return
 
         if 'thing/event/property/post' in topic \
                 or 'thing/event/cur_path/post' in topic \
                 or 'upgrade/post' in topic:
+            if topic in self._wait_events:
+                self._wait_events[topic].set()
             return
 
         if 'thing/service/property/get_reply' in topic:
@@ -306,19 +323,38 @@ class KarcherHome:
                 # TODO: handle error
                 return
             self._update_device_properties(sn, data['data'])
+            if topic in self._wait_events:
+                self._wait_events[topic].set()
             return
+
+        if topic in self._wait_events:
+            self._wait_events[topic].set()
+
+    def _wait_for_topic(self, topic: str, timeout: float = 5):
+        if self._mqtt is None:
+            return
+
+        if topic in self._wait_events:
+            return
+
+        event = threading.Event()
+        self._wait_events[topic] = event
+
+        event.wait(timeout)
+        del self._wait_events[topic]
 
     def _update_device_properties(self, sn: str, data: dict):
         if sn not in self._device_props:
             return
 
         self._device_props[sn].update(data)
+        self._device_props[sn].last_update_time = get_timestamp()
 
     def request_device_update(self, dev: Device):
         """Request device update."""
 
         if self._session is None \
-                or self._session.auth_token == '' or self._session.user_id == '':
+                or self._session.mqtt_token == '' or self._session.user_id == '':
             raise KarcherHomeAccessDenied('Not authorized')
 
         self._mqtt_connect()
@@ -337,7 +373,24 @@ class KarcherHome:
     def get_device_properties(self, dev: Device):
         """Get device properties if it has subscription."""
 
-        if dev.sn not in self._device_props:
-            return None
+        if dev.sn in self._device_props:
+            return self._device_props[dev.sn]
 
-        return self._device_props[dev.sn]
+        if self._session is None \
+                or self._session.mqtt_token == '' or self._session.user_id == '':
+            raise KarcherHomeAccessDenied('Not authorized')
+
+        self._mqtt_connect(wait_for_connect=True)
+        subscr = dev.sn not in self._device_props
+        if subscr:
+            self.subscribe_device(dev)
+        self.request_device_update(dev)
+        self._wait_for_topic(
+            get_device_topic_property_get_reply(dev.product_id, dev.sn))
+
+        props = self._device_props[dev.sn]
+
+        if subscr:
+            self.unsubscribe_device(dev)
+
+        return props

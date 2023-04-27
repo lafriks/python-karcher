@@ -6,7 +6,10 @@
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/debug.py",
-            "args": ["-d", "get-urls"],
+            "args": [
+                "-d",
+                "urls"
+            ],
             "console": "integratedTerminal",
             "justMyCode": true
         }
