@@ -8,7 +8,6 @@ import dataclasses
 import json
 import logging
 
-from karcher.auth import Session
 from karcher.exception import KarcherHomeException
 from karcher.karcher import KarcherHome
 from karcher.consts import Region
