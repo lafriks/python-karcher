@@ -1,4 +1,4 @@
-# Karcher Home Robots client
+# Kärcher Home Robots client
 
 Python library and cli to authorize into Karcher Home Robots account and fetch device information.
 
