@@ -28,7 +28,7 @@ class EnhancedJSONEncoder(json.JSONEncoder):
 class GlobalContextObject:
     def __init__(self,
                  debug: int = 0,
-                 output: str = "json",
+                 output: str = 'json',
                  region: Region = Region.EU
                  ):
         self.debug = debug
@@ -36,29 +36,29 @@ class GlobalContextObject:
         self.region = region
 
     def print(self, result):
-        data_variable = getattr(result, "data", None)
+        data_variable = getattr(result, 'data', None)
         if data_variable is not None:
             result = data_variable
-        if self.output == "json_pretty":
+        if self.output == 'json_pretty':
             echo(json.dumps(result, cls=EnhancedJSONEncoder, indent=4))
         else:
             echo(json.dumps(result, cls=EnhancedJSONEncoder))
 
 
 @click.group()
-@click.option("-d", "--debug", is_flag=True)
+@click.option('-d', '--debug', is_flag=True)
 @click.option(
-    "-o",
-    "--output",
-    type=click.Choice(["json", "json_pretty"]),
-    default="json",
-    help="Output format. Default: 'json'")
+    '-o',
+    '--output',
+    type=click.Choice(['json', 'json_pretty']),
+    default='json',
+    help='Output format. Default: "json"')
 @click.option(
-    "-r",
-    "--region",
+    '-r',
+    '--region',
     type=click.Choice([Region.EU, Region.US, Region.CN]),
     default=Region.EU,
-    help="Region of the server to query. Default: 'eu'")
+    help='Region of the server to query. Default: "eu"')
 @click.pass_context
 def cli(ctx: click.Context, debug: int, output: str, region: Region):
     """Tool for connectiong and getting information from Kärcher Home Robots."""
