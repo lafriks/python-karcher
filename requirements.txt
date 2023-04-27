@@ -2,3 +2,4 @@ requests >= 2.25
 protobuf >= 4.22
 click >= 8.1
 pycryptodome >= 3.17
+paho-mqtt >= 1.6
