@@ -69,9 +69,9 @@ class Product(str, Enum):
 
 
 REGION_URLS = {
-    Region.EU: "https://eu-appaiot.3irobotix.net",
-    Region.US: "https://us-appaiot.3irobotix.net",
-    Region.CN: "https://cn-appaiot.3irobotix.net",
+    Region.EU: 'https://eu-appaiot.3irobotix.net',
+    Region.US: 'https://us-appaiot.3irobotix.net',
+    Region.CN: 'https://cn-appaiot.3irobotix.net',
 }
 
 REGION_INDEX = {
@@ -80,8 +80,39 @@ REGION_INDEX = {
     Region.CN: 0,
 }
 
-TENANT_ID = "1528983614213726208"
-PROJECT_TYPE = "android_iot.karcher"
-PROTOCOL_VERSION = "v1"
+ROBOT_PROPERTIES = [
+    'status',
+    'firmware_code',
+    'firmware',
+    'fault',
+    'mode',
+    'wind',
+    'water',
+    'repeat_state',
+    'charge_state',
+    'quantity',
+    'work_mode',
+    'sweep_type',
+    'build_map',
+    'cleaning_area',
+    'cleaning_time',
+    'current_map_id',
+    'custom_type',
+    'privacy',
+    'alarm',
+    'volume',
+    'tank_state',
+    'cloth_state',
+    'mop_route',
+    'map_num',
+    'language',
+    'voice_type',
+    'quiet_status',
+    'quiet_is_open'
+]
+
+TENANT_ID = '1528983614213726208'
+PROJECT_TYPE = 'android_iot.karcher'
+PROTOCOL_VERSION = 'v1'
 APP_VERSION_CODE = 10004
 APP_VERSION_NAME = '1.0.4'

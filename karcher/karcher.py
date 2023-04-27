@@ -10,13 +10,14 @@ import urllib.parse
 
 from .auth import Domains, Session
 from .consts import APP_VERSION_CODE, APP_VERSION_NAME, PROJECT_TYPE, \
-    PROTOCOL_VERSION, REGION_URLS, TENANT_ID, \
+    PROTOCOL_VERSION, REGION_URLS, ROBOT_PROPERTIES, TENANT_ID, \
     Region, Language
-from .device import Device
+from .device import Device, DeviceProperties
 from .exception import KarcherHomeAccessDenied, KarcherHomeException, handle_error_code
 from .map import Map
+from .mqtt import MqttClient, get_device_topics
 from .utils import decrypt, decrypt_map, encrypt, get_nonce, get_random_string, \
-    get_timestamp, is_email, md5
+    get_timestamp, get_timestamp_ms, is_email, md5
 
 
 class KarcherHome:
@@ -29,6 +30,9 @@ class KarcherHome:
         self._base_url = REGION_URLS[region]
         self._mqtt_url = None
         self._language = Language.EN
+        self._session = None
+        self._mqtt = None
+        self._device_props = {}
 
         d = self.get_urls()
         # Update base URLs
@@ -37,7 +41,7 @@ class KarcherHome:
         if d.mqtt != '':
             self._mqtt_url = d.mqtt
 
-    def _request(self, sess: Session, method: str, url: str, **kwargs):
+    def _request(self, method: str, url: str, **kwargs):
         session = requests.Session()
         # TODO: Fix SSL
         requests.packages.urllib3.disable_warnings()
@@ -49,11 +53,11 @@ class KarcherHome:
 
         headers['User-Agent'] = 'Android_' + TENANT_ID
         auth = ''
-        if sess is not None and sess.auth_token != '':
-            auth = sess.auth_token
+        if self._session is not None and self._session.auth_token != '':
+            auth = self._session.auth_token
             headers['authorization'] = auth
-        if sess is not None and sess.user_id != '':
-            headers['id'] = sess.user_id
+        if self._session is not None and self._session.user_id != '':
+            headers['id'] = self._session.user_id
         headers['tenantId'] = TENANT_ID
 
         # Sign request
@@ -122,10 +126,28 @@ class KarcherHome:
             return json.loads(decrypt(result[prop]))
         return result
 
+    def _mqtt_connect(self):
+        if self._session is None \
+                or self._session.mqtt_token == '' or self._session.user_id == '':
+            raise KarcherHomeAccessDenied('Not authorized')
+
+        if self._mqtt is not None:
+            return
+
+        u = urllib.parse.urlparse("//" + self._mqtt_url)
+
+        self._mqtt = MqttClient(
+            host=u.hostname,
+            port=u.port,
+            username=self._session.user_id,
+            password=self._session.mqtt_token)
+        self._mqtt.connect()
+        self._mqtt.on_message = self._process_mqtt_message
+
     def get_urls(self):
         """Get URLs for API and MQTT."""
 
-        resp = self._request(None, 'GET', '/network-service/domains/list', params={
+        resp = self._request('GET', '/network-service/domains/list', params={
             'tenantId': TENANT_ID,
             'productModeCode': PROJECT_TYPE,
             'version': PROTOCOL_VERSION,
@@ -143,7 +165,7 @@ class KarcherHome:
         if not is_email(username):
             username = '86-' + username
 
-        resp = self._request(None, 'POST', '/user-center/auth/login', json={
+        resp = self._request('POST', '/user-center/auth/login', json={
             'tenantId': TENANT_ID,
             'lang': str(self._language),
             'token': None,
@@ -163,47 +185,65 @@ class KarcherHome:
         })
 
         d = self._process_response(resp)
-        sess = Session(**d)
-        sess.register_id = register_id
+        self._session = Session(**d)
+        self._session.register_id = register_id
 
-        return sess
+        return self._session
 
-    def logout(self, sess: Session):
+    def login_token(self, auth_token: str, mqtt_token: str, register_id=None):
+        """Login using provided tokens."""
+
+        if register_id is None or register_id == '':
+            register_id = get_random_string(19)
+
+        self._session = Session.from_token(auth_token, mqtt_token)
+        self._session.register_id = register_id
+
+        return self._session
+
+    def logout(self):
         """End current session.
 
         This will also reset the session object.
         """
-        if sess.auth_token == '' or sess.user_id == '':
-            sess.reset()
+        if self._session is None \
+                or self._session.auth_token == '' or self._session.user_id == '':
+            self._session = None
             return
 
         self._process_response(self._request(
-            sess, 'POST', '/user-center/auth/logout'))
-        sess.reset()
+            'POST', '/user-center/auth/logout'))
+        self._session = None
 
-    def get_devices(self, sess: Session):
+        if self._mqtt is not None:
+            self._mqtt.disconnect()
+            self._mqtt = None
+
+    def get_devices(self):
         """Get all user devices."""
 
-        if sess is None or sess.auth_token == '' or sess.user_id == '':
+        if self._session is None \
+                or self._session.auth_token == '' or self._session.user_id == '':
             raise KarcherHomeAccessDenied('Not authorized')
 
         resp = self._request(
-            sess, 'GET',
-            '/smart-home-service/smartHome/user/getDeviceInfoByUserId/' + sess.user_id)
+            'GET',
+            '/smart-home-service/smartHome/user/getDeviceInfoByUserId/'
+            + self._session.user_id)
 
         return [Device(**d) for d in self._process_response(resp)]
 
-    def get_map_data(self, sess: Session, dev: Device, map: int = 1):
+    def get_map_data(self, dev: Device, map: int = 1):
         # <tenantId>/<modeType>/<deviceSn>/01-01-2022/map/temp/0046690461_<deviceSn>_1
         mapDir = TENANT_ID + '/' + dev.product_mode_code + '/' +\
             dev.sn + '/01-01-2022/map/temp/0046690461_' + \
             dev.sn + '_' + str(map)
 
-        resp = self._request(sess, 'POST',
+        resp = self._request('POST',
                              '/storage-management/storage/aws/getAccessUrl',
                              json={
                                  'dir': mapDir,
-                                 'countryCode': sess.get_country_code(),
+                                 'countryCode': self._session.get_country_code(),
                                  'serviceType': 2,
                                  'tenantId': TENANT_ID,
                              })
@@ -219,3 +259,85 @@ class KarcherHome:
             return Map.parse(data)
         else:
             return json.loads(data)
+
+    def subscribe_device(self, dev: Device):
+        """Subscribe to device real-time events."""
+
+        if self._session is None \
+                or self._session.mqtt_token == '' or self._session.user_id == '':
+            raise KarcherHomeAccessDenied('Not authorized')
+
+        self._mqtt_connect()
+        self._device_props[dev.sn] = DeviceProperties()
+        self._mqtt.subscribe(get_device_topics(dev.product_id, dev.sn))
+
+    def unsubscribe_device(self, dev: Device):
+        """Unsubscribe from device real-time events."""
+
+        if self._session is None \
+                or self._session.mqtt_token == '' or self._session.user_id == '':
+            return
+
+        if self._mqtt is None or dev.sn not in self._device_props:
+            return
+
+        self._mqtt.unsubscribe(get_device_topics(dev.product_id, dev.sn))
+        del self._device_props[dev.sn]
+
+    def _process_mqtt_message(self, topic, msg):
+        sn = None
+        for s in self._device_props.keys():
+            if '/' + s + '/' in topic:
+                sn = s
+                break
+
+        if sn is None:
+            # Ignore messages for devices we have not subscribed to
+            return
+
+        if 'thing/event/property/post' in topic \
+                or 'thing/event/cur_path/post' in topic \
+                or 'upgrade/post' in topic:
+            return
+
+        if 'thing/service/property/get_reply' in topic:
+            data = json.loads(msg)
+            if data['code'] != 0:
+                # TODO: handle error
+                return
+            self._update_device_properties(sn, data['data'])
+            return
+
+    def _update_device_properties(self, sn: str, data: dict):
+        if sn not in self._device_props:
+            return
+
+        self._device_props[sn].update(data)
+
+    def request_device_update(self, dev: Device):
+        """Request device update."""
+
+        if self._session is None \
+                or self._session.auth_token == '' or self._session.user_id == '':
+            raise KarcherHomeAccessDenied('Not authorized')
+
+        self._mqtt_connect()
+        self._mqtt.publish(
+            "/mqtt/" + dev.product_id + '/' + dev.sn + "/thing/service/property/get",
+            json.dumps({
+                "method": "prop.get",
+                "msgId": str(get_timestamp_ms()),
+                "tenantId": TENANT_ID,
+                "version": "3.0",
+                "params": {
+                    "property": ROBOT_PROPERTIES,
+                },
+            }))
+
+    def get_device_properties(self, dev: Device):
+        """Get device properties if it has subscription."""
+
+        if dev.sn not in self._device_props:
+            return None
+
+        return self._device_props[dev.sn]

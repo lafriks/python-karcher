@@ -17,10 +17,14 @@ from .consts import TENANT_ID, Product
 
 EMAIL_REGEX = "^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$"
 
+
 def get_random_string(length):
     letters = string.digits + string.ascii_lowercase + string.ascii_uppercase
-    result_str = ''.join(random.choice(letters) for i in range(length))
-    return result_str
+    return ''.join(random.choice(letters) for i in range(length))
+
+
+def get_random_device_id():
+    return ''.join(random.choice('0123456789abcdef') for i in range(16))
 
 
 def get_nonce():
@@ -29,6 +33,10 @@ def get_nonce():
 
 def get_timestamp():
     return int(time.time())
+
+
+def get_timestamp_ms():
+    return int(time.time() * 1000)
 
 
 def get_enc_key():
