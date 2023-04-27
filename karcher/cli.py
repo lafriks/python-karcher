@@ -109,12 +109,12 @@ def login(ctx: click.Context, username: str, password: str):
 @click.option('--password', '-p', default=None, help='Password to login with.')
 @click.option('--auth-token', '-t', default=None, help='Authorization token.')
 @click.pass_context
-def devices(ctx: click.Context, username: str, password: str, token: str):
+def devices(ctx: click.Context, username: str, password: str, auth_token: str):
     """List all devices."""
 
     kh = KarcherHome(region=ctx.obj.region)
-    if token is not None:
-        kh.login_token(token, '')
+    if auth_token is not None:
+        kh.login_token(auth_token, '')
     elif username is not None and password is not None:
         kh.login(username, password)
     else:
@@ -124,7 +124,7 @@ def devices(ctx: click.Context, username: str, password: str, token: str):
     devices = kh.get_devices()
 
     # Logout if we used a username and password
-    if token is None:
+    if auth_token is None:
         kh.logout()
 
     ctx.obj.print(devices)
