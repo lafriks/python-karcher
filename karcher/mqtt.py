@@ -16,6 +16,7 @@ class MqttClient:
             clean_session=True,
             protocol=MQTTv311)
         self.on_message = None
+        self.on_connect = None
 
     def connect(self):
         # TODO validate certificate
@@ -64,6 +65,8 @@ class MqttClient:
 
     def _on_connect(self, client, userdata, flags, rc):
         self._subscribe(self._topics)
+        if self.on_connect is not None:
+            self.on_connect()
 
     def _on_message(self, client, userdata, msg):
         if self.on_message is not None:
@@ -77,7 +80,7 @@ def get_device_topics(product_id: str, sn: str):
     return [
         '/mqtt/' + product_id + '/' + sn + '/thing/event/property/post',
         '/mqtt/' + product_id + '/' + sn + '/thing/service/property/set_reply',
-        '/mqtt/' + product_id + '/' + sn + '/thing/service/property/get_reply',
+        get_device_topic_property_get_reply(product_id, sn),
         '/mqtt/' + product_id + '/' + sn + '/thing/service_invoke',
         '/mqtt/' + product_id + '/' + sn + '/thing/service_invoke_reply/#',
         '/mqtt/' + product_id + '/' + sn + '/thing/event/cur_path/post',
@@ -86,3 +89,7 @@ def get_device_topics(product_id: str, sn: str):
         '/mqtt/' + product_id + '/' + sn + '/ota/service/upgrade/get_reply',
         '/mqtt/' + product_id + '/' + sn + '/ota/service/version/post',
     ]
+
+
+def get_device_topic_property_get_reply(product_id: str, sn: str):
+    return '/mqtt/' + product_id + '/' + sn + '/thing/service/property/get_reply'

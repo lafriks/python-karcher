@@ -7,7 +7,7 @@ setup(
     name='karcher-home',
     packages=['karcher'],
     include_package_data=True,
-    version='0.1.1',
+    version='0.2',
     license='MIT',
     description='Kärcher Home Robots client',
     long_description=open('README.md').read(),
