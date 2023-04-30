@@ -1,3 +1,4 @@
+from typing import List
 import ssl
 from paho.mqtt.client import Client, MQTTv311
 
@@ -76,7 +77,7 @@ class MqttClient:
         self.disconnect()
 
 
-def get_device_topics(product_id: str, sn: str):
+def get_device_topics(product_id: str, sn: str) -> List[str]:
     return [
         '/mqtt/' + product_id + '/' + sn + '/thing/event/property/post',
         '/mqtt/' + product_id + '/' + sn + '/thing/service/property/set_reply',
@@ -91,5 +92,5 @@ def get_device_topics(product_id: str, sn: str):
     ]
 
 
-def get_device_topic_property_get_reply(product_id: str, sn: str):
+def get_device_topic_property_get_reply(product_id: str, sn: str) -> str:
     return '/mqtt/' + product_id + '/' + sn + '/thing/service/property/get_reply'

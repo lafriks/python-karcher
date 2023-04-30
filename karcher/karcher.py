@@ -6,13 +6,16 @@
 import collections
 import json
 import threading
+from typing import List, Any
 import requests
 import urllib.parse
 
+
 from .auth import Domains, Session
+from .countries import get_country_code, get_region_by_country
 from .consts import APP_VERSION_CODE, APP_VERSION_NAME, PROJECT_TYPE, \
     PROTOCOL_VERSION, REGION_URLS, ROBOT_PROPERTIES, TENANT_ID, \
-    Region, Language
+    Language
 from .device import Device, DeviceProperties
 from .exception import KarcherHomeAccessDenied, KarcherHomeException, handle_error_code
 from .map import Map
@@ -24,13 +27,14 @@ from .utils import decrypt, decrypt_map, encrypt, get_nonce, get_random_string, 
 class KarcherHome:
     """Main class to access Karcher Home Robots API"""
 
-    def __init__(self, region: Region = Region.EU):
+    def __init__(self, country: str = 'GB', language: Language = Language.EN):
         """Initialize Karcher Home Robots API"""
 
         super().__init__()
-        self._base_url = REGION_URLS[region]
+        self._country = country.upper()
+        self._base_url = REGION_URLS[get_region_by_country(self._country)]
         self._mqtt_url = None
-        self._language = Language.EN
+        self._language = language
         self._session = None
         self._mqtt = None
         self._device_props = {}
@@ -43,7 +47,7 @@ class KarcherHome:
         if d.mqtt != '':
             self._mqtt_url = d.mqtt
 
-    def _request(self, method: str, url: str, **kwargs):
+    def _request(self, method: str, url: str, **kwargs) -> requests.Response:
         session = requests.Session()
         # TODO: Fix SSL
         requests.packages.urllib3.disable_warnings()
@@ -96,7 +100,7 @@ class KarcherHome:
         kwargs['headers'] = headers
         return session.request(method, self._base_url + url, **kwargs)
 
-    def _download(self, url):
+    def _download(self, url) -> bytes:
         session = requests.Session()
         headers = {
             'User-Agent': 'Android_' + TENANT_ID,
@@ -109,7 +113,7 @@ class KarcherHome:
 
         return resp.content
 
-    def _process_response(self, resp, prop=None):
+    def _process_response(self, resp, prop=None) -> Any:
         if resp.status_code != 200:
             raise KarcherHomeException(-1,
                                        'HTTP error: ' + str(resp.status_code))
@@ -157,7 +161,7 @@ class KarcherHome:
             event.wait()
             self._mqtt.on_connect = None
 
-    def get_urls(self):
+    def get_urls(self) -> Domains:
         """Get URLs for API and MQTT."""
 
         resp = self._request('GET', '/network-service/domains/list', params={
@@ -169,7 +173,7 @@ class KarcherHome:
         d = self._process_response(resp, 'domain')
         return Domains(**d)
 
-    def login(self, username, password, register_id=None):
+    def login(self, username, password, register_id=None) -> Session:
         """Login using provided credentials."""
 
         if register_id is None or register_id == '':
@@ -203,7 +207,11 @@ class KarcherHome:
 
         return self._session
 
-    def login_token(self, auth_token: str, mqtt_token: str, register_id=None):
+    def login_token(
+            self,
+            auth_token: str,
+            mqtt_token: str,
+            register_id=None) -> Session:
         """Login using provided tokens."""
 
         if register_id is None or register_id == '':
@@ -232,7 +240,7 @@ class KarcherHome:
             self._mqtt.disconnect()
             self._mqtt = None
 
-    def get_devices(self):
+    def get_devices(self) -> List[Device]:
         """Get all user devices."""
 
         if self._session is None \
@@ -256,7 +264,7 @@ class KarcherHome:
                              '/storage-management/storage/aws/getAccessUrl',
                              json={
                                  'dir': mapDir,
-                                 'countryCode': self._session.get_country_code(),
+                                 'countryCode': get_country_code(self._country),
                                  'serviceType': 2,
                                  'tenantId': TENANT_ID,
                              })
@@ -370,7 +378,7 @@ class KarcherHome:
                 },
             }))
 
-    def get_device_properties(self, dev: Device):
+    def get_device_properties(self, dev: Device) -> DeviceProperties:
         """Get device properties if it has subscription."""
 
         if dev.sn in self._device_props:

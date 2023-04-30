@@ -7,7 +7,6 @@ import base64
 from dataclasses import dataclass, fields
 import json
 
-from karcher.countries import COUNTRIES
 
 @dataclass(init=False)
 class Domains:
@@ -27,10 +26,11 @@ class Domains:
                     v = 'https://' + v
                 setattr(self, k, v)
 
+
 @dataclass(init=False)
 class Session:
     """Authorized user session class.
-    
+
     This class represents a Karcher Home authorized user session.
     """
 
@@ -38,10 +38,8 @@ class Session:
     user_id: str
     auth_token: str
     mqtt_token: str
-    country_code: str
 
     def __init__(self, **kwargs):
-        setattr(self, 'country_code', None)
         names = set([f.name for f in fields(self)])
         if 'id' in kwargs:
             setattr(self, 'user_id', kwargs['id'])
@@ -61,12 +59,6 @@ class Session:
         self.user_id = ''
         self.auth_token = ''
         self.mqtt_token = ''
-
-    def get_country_code(self):
-        """Get country code."""
-        if self.country_code in COUNTRIES:
-            return COUNTRIES[self.country_code]
-        return self.country_code
 
     @staticmethod
     def from_token(auth_token: str, mqtt_token: str):

@@ -142,13 +142,19 @@ class DeviceProperties:
         setattr(self, 'cur_path', [])
         self.update(kwargs)
 
-    def update(self, data: dict[str, Any]):
+    def update(self, data: dict[str, Any]) -> bool:
+        """Update device properties."""
+
+        updated = False
         names = set([f.name for f in fields(self)])
         for k, v in data.items():
             if k in names:
                 if k == 'firmware_code':
                     v = int(v)
-                setattr(self, k, v)
+                if v != getattr(self, k):
+                    setattr(self, k, v)
+                    updated = True
+        return updated
 
 
 @dataclass(init=False)
@@ -197,4 +203,5 @@ class Device:
 
     def is_online(self):
         """Get device status."""
+
         return self.status == DeviceStatus.Online

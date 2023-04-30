@@ -3,6 +3,11 @@
 # SPDX-License-Identifier: MIT
 # -----------------------------------------------------------
 
+from typing import Final
+
+from .consts import Region
+
+
 COUNTRIES = {
     'AD': 'AND',
     'AE': 'UAE',
@@ -134,3 +139,151 @@ COUNTRIES = {
     'SKN': 'SKN',
     'TWN': 'TWN',
 }
+
+COUNTRY_REGIONS: Final = {
+    'AND': Region.EU,
+    'UAE': Region.EU,
+    'AFG': Region.CN,
+    'ANT': Region.US,
+    'ALB': Region.EU,
+    'ARM': Region.EU,
+    'ARG': Region.US,
+    'AUT': Region.EU,
+    'AZE': Region.EU,
+    'BAR': Region.US,
+    'BAN': Region.CN,
+    'BEL': Region.EU,
+    'BUL': Region.EU,
+    'BRN': Region.EU,
+    'BRU': Region.CN,
+    'BOL': Region.US,
+    'BRA': Region.US,
+    'BAH': Region.US,
+    'BHU': Region.CN,
+    'BLR': Region.EU,
+    'BIZ': Region.US,
+    'CAN': Region.US,
+    'SUI': Region.EU,
+    'CHI': Region.US,
+    'CHN': Region.CN,
+    'COL': Region.US,
+    'CRI': Region.US,
+    'CUB': Region.US,
+    'CYP': Region.EU,
+    'CZE': Region.EU,
+    'GER': Region.EU,
+    'DEN': Region.EU,
+    'DMA': Region.US,
+    'DOM': Region.US,
+    'ECU': Region.US,
+    'EST': Region.EU,
+    'ESP': Region.EU,
+    'FIN': Region.EU,
+    'FRA': Region.EU,
+    'GBR': Region.EU,
+    'GRN': Region.US,
+    'GEO': Region.EU,
+    'GRE': Region.EU,
+    'GUA': Region.US,
+    'GUY': Region.US,
+    'HKG': Region.CN,
+    'HON': Region.US,
+    'CRO': Region.EU,
+    'HAI': Region.US,
+    'HUN': Region.EU,
+    'INA': Region.CN,
+    'IRL': Region.EU,
+    'ISR': Region.EU,
+    'IND': Region.CN,
+    'IRQ': Region.EU,
+    'IRI': Region.EU,
+    'ISL': Region.EU,
+    'ITA': Region.EU,
+    'JAM': Region.US,
+    'JOR': Region.EU,
+    'JPN': Region.CN,
+    'KEN': Region.EU,
+    'KGZ': Region.CN,
+    'CAM': Region.CN,
+    'KOR': Region.CN,
+    'KUW': Region.EU,
+    'KAZ': Region.CN,
+    'LAO': Region.CN,
+    'LIB': Region.EU,
+    'LCA': Region.US,
+    'LIE': Region.EU,
+    'SRI': Region.CN,
+    'LTU': Region.EU,
+    'LUX': Region.EU,
+    'LAT': Region.EU,
+    'MAS': Region.CN,
+    'MON': Region.EU,
+    'MDA': Region.EU,
+    'MGL': Region.CN,
+    'Macao': Region.CN,
+    'MAC': Region.CN,
+    'MEX': Region.US,
+    'NED': Region.EU,
+    'NOR': Region.EU,
+    'NEP': Region.CN,
+    'NZL': Region.US,
+    'OMA': Region.EU,
+    'PAN': Region.US,
+    'PER': Region.US,
+    'PHI': Region.CN,
+    'PAK': Region.CN,
+    'POL': Region.EU,
+    'PUR': Region.US,
+    'POR': Region.EU,
+    'PAR': Region.US,
+    'QAT': Region.EU,
+    'ROU': Region.EU,
+    'SRB': Region.EU,
+    'RUS': Region.EU,
+    'KSA': Region.EU,
+    'SIN': Region.CN,
+    'SVK': Region.EU,
+    'SMR': Region.EU,
+    'SUR': Region.US,
+    'ESA': Region.US,
+    'SYR': Region.EU,
+    'THA': Region.CN,
+    'TJK': Region.CN,
+    'TLS': Region.CN,
+    'TKM': Region.CN,
+    'TUR': Region.EU,
+    'TRI': Region.US,
+    'UKR': Region.EU,
+    'USA': Region.US,
+    'URU': Region.US,
+    'UZB': Region.CN,
+    'VCS': Region.US,
+    'VIN': Region.US,
+    'VEN': Region.US,
+    'VIE': Region.CN,
+    'YEM': Region.EU,
+    'BIH': Region.EU,
+    'PLE': Region.EU,
+    'SKN': Region.US,
+    'TWN': Region.CN,
+}
+
+
+def get_country_code(country: str) -> str:
+    """Get country code."""
+
+    country = country.upper()
+    if country in COUNTRIES:
+        return COUNTRIES[country]
+    return country
+
+
+def get_region_by_country(country: str) -> Region:
+    """Get region by country."""
+
+    country = get_country_code(country)
+
+    # Return region (US, EU or CN) based on country code
+    if country in COUNTRY_REGIONS:
+        return COUNTRY_REGIONS[country]
+    return Region.EU
