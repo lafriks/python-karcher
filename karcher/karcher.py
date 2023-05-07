@@ -11,7 +11,6 @@ from typing import List, Any
 import aiohttp
 import urllib.parse
 
-
 from .auth import Domains, Session
 from .countries import get_country_code, get_region_by_country
 from .consts import (
@@ -23,6 +22,7 @@ from .device import Device, DeviceProperties
 from .exception import KarcherHomeAccessDenied, KarcherHomeException, handle_error_code
 from .map import Map
 from .mqtt import MqttClient, get_device_topic_property_get_reply, get_device_topics
+from .user import UserProfile
 from .utils import (
     decrypt, decrypt_map, encrypt, get_nonce, get_random_string,
     get_timestamp, get_timestamp_ms, is_email, md5
@@ -49,12 +49,12 @@ class KarcherHome:
             self._http_external = True
             self._http = session
 
-        d = await self.get_urls()
+        data = await self.get_urls()
         # Update base URLs
-        if d.app_api != '':
-            self._base_url = d.app_api
-        if d.mqtt != '':
-            self._mqtt_url = d.mqtt
+        if data.app_api != '':
+            self._base_url = data.app_api
+        if data.mqtt != '':
+            self._mqtt_url = data.mqtt
 
         return self
 
@@ -218,8 +218,8 @@ class KarcherHome:
             'version': PROTOCOL_VERSION,
         })
 
-        d = await self._process_response(resp, 'domain')
-        return Domains(**d)
+        data = await self._process_response(resp, 'domain')
+        return Domains(**data)
 
     async def login(self, username, password, register_id=None) -> Session:
         """Login using provided credentials."""
@@ -249,8 +249,8 @@ class KarcherHome:
             },
         })
 
-        d = await self._process_response(resp)
-        self._session = Session(**d)
+        data = await self._process_response(resp)
+        self._session = Session(**data)
         self._session.register_id = register_id
 
         return self._session
@@ -286,6 +286,20 @@ class KarcherHome:
 
         await self.close()
 
+    async def get_user_info(self) -> UserProfile:
+        """Get user profile information."""
+
+        if self._session is None \
+                or self._session.auth_token == '' or self._session.user_id == '':
+            raise KarcherHomeAccessDenied('Not authorized')
+
+        resp = await self._request(
+            'GET',
+            '/user-center/app/user/profile')
+        data = await self._process_response(resp)
+
+        return UserProfile(**data)
+
     async def get_devices(self) -> List[Device]:
         """Get all user devices."""
 
@@ -315,13 +329,13 @@ class KarcherHome:
                                        'tenantId': TENANT_ID,
                                    })
 
-        d = await self._process_response(resp)
-        downloadUrl = d['url']
-        if 'cdnDomain' in d and d['cdnDomain'] != '':
-            downloadUrl = 'https://' + d['cdnDomain'] + '/' + d['dir']
+        data = await self._process_response(resp)
+        downloadUrl = data['url']
+        if 'cdnDomain' in data and data['cdnDomain'] != '':
+            downloadUrl = 'https://' + data['cdnDomain'] + '/' + data['dir']
 
-        d = await self._download(downloadUrl)
-        data = decrypt_map(dev.sn, dev.mac, dev.product_id, d)
+        data = await self._download(downloadUrl)
+        data = decrypt_map(dev.sn, dev.mac, dev.product_id, data)
         if map == 1 or map == 2:
             return Map.parse(data)
         else:

@@ -22,7 +22,7 @@ class DeviceStatus(int, Enum):
 class DeviceVersion:
     """Device version class.
 
-    This class represents a Karcher Home device version.
+    This class represents a Karcher Home Robots device version.
     """
     package_type: str = ''
     version: int = 0
@@ -84,7 +84,7 @@ class DevicePropertiesQuiet:
 class DeviceProperties:
     """Device properties class.
 
-    This class represents a Karcher Home detailed device properties.
+    This class represents a Karcher Home Robots detailed device properties.
     """
 
     firmware: str = ''
@@ -161,7 +161,7 @@ class DeviceProperties:
 class Device:
     """Device class.
 
-    This class represents a Karcher Home device.
+    This class represents a Karcher Home Robots device.
     """
 
     device_id: str

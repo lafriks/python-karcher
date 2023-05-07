@@ -12,7 +12,7 @@ import json
 class Domains:
     """Domains URLs class.
 
-    This class represents a Karcher Home access URLs.
+    This class represents a Karcher Home Robots access URLs.
     """
     app_api: str
     mqtt: str
@@ -31,7 +31,7 @@ class Domains:
 class Session:
     """Authorized user session class.
 
-    This class represents a Karcher Home authorized user session.
+    This class represents a Karcher Home Robots authorized user session.
     """
 
     register_id: str
