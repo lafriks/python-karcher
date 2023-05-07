@@ -32,13 +32,17 @@ class KarcherHome:
     """Main class to access Karcher Home Robots API"""
 
     @classmethod
-    async def create(cls, country: str = 'GB', language: Language = Language.EN):
+    async def create(cls, country: str = 'GB', language: Language = Language.EN, session: aiohttp.ClientSession = None):
         """Create Karcher Home Robots API instance"""
 
         self = KarcherHome()
         self._country = country.upper()
         self._base_url = REGION_URLS[get_region_by_country(self._country)]
         self._language = language
+
+        if session is not None:
+            self._http_external = True
+            self._http = session
 
         d = await self.get_urls()
         # Update base URLs
@@ -62,11 +66,27 @@ class KarcherHome:
         self._device_props = {}
         self._wait_events = {}
 
+    def __del__(self):
+        """Destructor"""
+
+        self.close()
+
+    async def close(self):
+        """Close underlying connections"""
+
+        if self._mqtt is not None:
+            self._mqtt.disconnect()
+            self._mqtt = None
+
+        if self._http is not None:
+            if self._http_external:
+                self._http.close()
+            self._http = None
+
     async def _request(self, method: str, url: str, **kwargs) -> aiohttp.ClientResponse:
-        session = aiohttp.ClientSession()
-        # TODO: Fix SSL
-        # requests.packages.urllib3.disable_warnings()
-        # session.skip = False
+        if self._http is None:
+            self._http_external = False
+            self._http = aiohttp.ClientSession()
 
         headers = {}
         if kwargs.get('headers') is not None:
@@ -113,27 +133,32 @@ class KarcherHome:
         headers['nonce'] = nonce
 
         kwargs['headers'] = headers
+        # TODO: Fix SSL
         kwargs['verify_ssl'] = False
-        return await session.request(method, self._base_url + url, **kwargs)
+        return await self._http.request(method, self._base_url + url, **kwargs)
 
     async def _download(self, url) -> bytes:
-        session = aiohttp.ClientSession()
         headers = {
             'User-Agent': 'Android_' + TENANT_ID,
         }
 
-        resp = await session.get(url, headers=headers)
+        resp = await self._http.get(url, headers=headers)
         if resp.status != 200:
             raise KarcherHomeException(-1,
                                        'HTTP error: ' + str(resp.status_code))
 
-        return await resp.content.read(-1)
+        data = await resp.content.read(-1)
+        resp.close()
+
+        return data
 
     async def _process_response(self, resp: aiohttp.ClientResponse, prop=None) -> Any:
         if resp.status != 200:
             raise KarcherHomeException(-1,
                                        'HTTP error: ' + str(resp.status))
         data = await resp.json()
+        resp.close()
+
         # Check for error response
         if data['code'] != 0:
             handle_error_code(data['code'], data['msg'])
@@ -252,9 +277,7 @@ class KarcherHome:
             'POST', '/user-center/auth/logout'))
         self._session = None
 
-        if self._mqtt is not None:
-            self._mqtt.disconnect()
-            self._mqtt = None
+        await self.close()
 
     async def get_devices(self) -> List[Device]:
         """Get all user devices."""

@@ -77,7 +77,8 @@ def cli(ctx: click.Context, debug: int, output: str, country: str):
 
     logging.basicConfig(level=level)
 
-    ctx.obj = GlobalContextObject(debug=debug, output=output, country=country.upper())
+    ctx.obj = GlobalContextObject(
+        debug=debug, output=output, country=country.upper())
 
 
 def safe_cli():
@@ -99,6 +100,7 @@ async def urls(ctx: click.Context):
 
     kh = await KarcherHome.create(country=ctx.obj.country)
     d = await kh.get_urls()
+    await kh.close()
 
     ctx.obj.print(d)
 
@@ -112,7 +114,10 @@ async def login(ctx: click.Context, username: str, password: str):
     """Get user session tokens."""
 
     kh = await KarcherHome.create(country=ctx.obj.country)
+
     ctx.obj.print(kh.login(username, password))
+
+    await kh.close()
 
 
 @cli.command()
@@ -138,6 +143,8 @@ async def devices(ctx: click.Context, username: str, password: str, auth_token: 
     # Logout if we used a username and password
     if auth_token is None:
         await kh.logout()
+
+    await kh.close()
 
     ctx.obj.print(devices)
 
@@ -182,5 +189,7 @@ async def device_properties(
     # Logout if we used a username and password
     if auth_token is None:
         await kh.logout()
+
+    await kh.close()
 
     ctx.obj.print(props)

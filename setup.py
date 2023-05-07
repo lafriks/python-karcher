@@ -7,7 +7,7 @@ setup(
     name='karcher-home',
     packages=['karcher'],
     include_package_data=True,
-    version='0.4.1',
+    version='0.4.2',
     license='MIT',
     description='Kärcher Home Robots client',
     long_description=open('README.md').read(),
@@ -15,7 +15,7 @@ setup(
     author='Lauris BH',
     author_email='lauris@nix.lv',
     url='https://github.com/lafriks/python-karcher',
-    download_url='https://github.com/lafriks/python-karcher/releases/download/v0.4.1/karcher-home-0.4.1.tar.gz',
+    download_url='https://github.com/lafriks/python-karcher/releases/download/v0.4.2/karcher-home-0.4.2.tar.gz',
     platforms='any',
     install_requires=[
         'click',
