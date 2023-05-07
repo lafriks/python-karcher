@@ -87,7 +87,7 @@ class KarcherHome:
 
         if self._http is not None:
             if not self._http_external:
-                self._http.close()
+                await self._http.close()
             self._http = None
 
     async def _request(self, method: str, url: str, **kwargs) -> aiohttp.ClientResponse:
