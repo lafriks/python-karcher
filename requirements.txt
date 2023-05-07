@@ -1,5 +1,5 @@
-requests >= 2.25
+aiohttp >= 3.8
 protobuf >= 4.22
 click >= 8.1
-pycryptodome >= 3.17
+cryptography >= 40.0
 paho-mqtt >= 1.6

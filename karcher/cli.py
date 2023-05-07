@@ -3,10 +3,12 @@
 # SPDX-License-Identifier: MIT
 # -----------------------------------------------------------
 
+import asyncio
 import click
 import dataclasses
 import json
 import logging
+from functools import wraps
 
 from karcher.exception import KarcherHomeException
 from karcher.karcher import KarcherHome
@@ -16,6 +18,14 @@ try:
     from rich import print as echo
 except ImportError:
     echo = click.echo
+
+
+def coro(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(f(*args, **kwargs))
+
+    return wrapper
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):
@@ -84,11 +94,12 @@ def safe_cli():
 
 @cli.command()
 @click.pass_context
-def urls(ctx: click.Context):
+@coro
+async def urls(ctx: click.Context):
     """Get region information."""
 
-    kh = KarcherHome(region=ctx.obj.region)
-    d = kh.get_urls()
+    kh = await KarcherHome.create(region=ctx.obj.region)
+    d = await kh.get_urls()
 
     ctx.obj.print(d)
 
@@ -97,10 +108,11 @@ def urls(ctx: click.Context):
 @click.option('--username', '-u', help='Username to login with.')
 @click.option('--password', '-p', help='Password to login with.')
 @click.pass_context
-def login(ctx: click.Context, username: str, password: str):
+@coro
+async def login(ctx: click.Context, username: str, password: str):
     """Get user session tokens."""
 
-    kh = KarcherHome(region=ctx.obj.region)
+    kh = await KarcherHome.create(region=ctx.obj.region)
     ctx.obj.print(kh.login(username, password))
 
 
@@ -109,23 +121,24 @@ def login(ctx: click.Context, username: str, password: str):
 @click.option('--password', '-p', default=None, help='Password to login with.')
 @click.option('--auth-token', '-t', default=None, help='Authorization token.')
 @click.pass_context
-def devices(ctx: click.Context, username: str, password: str, auth_token: str):
+@coro
+async def devices(ctx: click.Context, username: str, password: str, auth_token: str):
     """List all devices."""
 
-    kh = KarcherHome(region=ctx.obj.region)
+    kh = await KarcherHome.create(region=ctx.obj.region)
     if auth_token is not None:
         kh.login_token(auth_token, '')
     elif username is not None and password is not None:
-        kh.login(username, password)
+        await kh.login(username, password)
     else:
         raise click.BadParameter(
             'Must provide either token or username and password.')
 
-    devices = kh.get_devices()
+    devices = await kh.get_devices()
 
     # Logout if we used a username and password
     if auth_token is None:
-        kh.logout()
+        await kh.logout()
 
     ctx.obj.print(devices)
 
@@ -137,7 +150,8 @@ def devices(ctx: click.Context, username: str, password: str, auth_token: str):
 @click.option('--mqtt-token', '-m', default=None, help='MQTT authorization token.')
 @click.option('--device-id', '-d', required=True, help='Device ID.')
 @click.pass_context
-def device_properties(
+@coro
+async def device_properties(
         ctx: click.Context,
         username: str,
         password: str,
@@ -146,17 +160,17 @@ def device_properties(
         device_id: str):
     """Get device properties."""
 
-    kh = KarcherHome(region=ctx.obj.region)
+    kh = await KarcherHome.create(region=ctx.obj.region)
     if auth_token is not None:
         kh.login_token(auth_token, mqtt_token)
     elif username is not None and password is not None:
-        kh.login(username, password)
+        await kh.login(username, password)
     else:
         raise click.BadParameter(
             'Must provide either token or username and password.')
 
     dev = None
-    for device in kh.get_devices():
+    for device in await kh.get_devices():
         if device.device_id == device_id:
             dev = device
             break
@@ -168,6 +182,6 @@ def device_properties(
 
     # Logout if we used a username and password
     if auth_token is None:
-        kh.logout()
+        await kh.logout()
 
     ctx.obj.print(props)

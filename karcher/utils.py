@@ -11,7 +11,7 @@ import string
 import time
 from typing import Final
 import zlib
-from Crypto.Cipher import AES
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 from .consts import TENANT_ID, Product
 
@@ -48,27 +48,27 @@ def get_enc_key() -> bytes:
 
 
 def decrypt(data) -> str:
-    cipher = AES.new(get_enc_key(), AES.MODE_ECB)
-    buf = cipher.decrypt(base64.b64decode(data))
+    cipher = Cipher(algorithms.AES128(get_enc_key()), modes.ECB())
+    buf = cipher.decryptor().update(base64.b64decode(data))
     return str(buf[:-ord(buf[-1:])], 'utf-8')
 
 
 def encrypt(data) -> str:
-    cipher = AES.new(get_enc_key(), AES.MODE_ECB)
+    cipher = Cipher(algorithms.AES128(get_enc_key()), modes.ECB())
     buf = bytes(data, 'utf-8')
-    pad_len = cipher.block_size - (len(buf) % cipher.block_size)
+    pad_len = 16 - (len(buf) % 16)
     buf = buf + bytes([pad_len]) * pad_len
-    return base64.b64encode(cipher.encrypt(buf)).decode()
+    return base64.b64encode(cipher.encryptor().update(buf)).decode()
 
 
 def get_map_enc_key(sn: str, mac: str, product_id: Product) -> bytes:
     sub_key = mac.replace(':', '').lower() + str(product_id.value)
-    cipher = AES.new(bytes(sub_key[0:16], 'utf-8'), AES.MODE_ECB)
+    cipher = Cipher(algorithms.AES128(bytes(sub_key[0:16], 'utf-8')), modes.ECB())
     buf = bytes(sn + '+' + str(product_id.value) + '+' + sn, 'utf-8')
-    pad_len = cipher.block_size - (len(buf) % cipher.block_size)
+    pad_len = 16 - (len(buf) % 16)
     buf = buf + bytes([pad_len]) * pad_len
 
-    key = base64.b64encode(cipher.encrypt(buf)).decode()
+    key = base64.b64encode(cipher.encryptor().update(buf)).decode()
 
     m = hashlib.md5()
     m.update(bytes(key, 'utf-8'))
@@ -77,8 +77,9 @@ def get_map_enc_key(sn: str, mac: str, product_id: Product) -> bytes:
 
 
 def decrypt_map(sn: str, mac: str, product_id: Product, data: bytes) -> bytes:
-    cipher = AES.new(get_map_enc_key(sn, mac, product_id), AES.MODE_ECB)
-    buf = cipher.decrypt(base64.b64decode(data))
+    key = get_map_enc_key(sn, mac, product_id)
+    cipher = Cipher(algorithms.AES128(key), modes.ECB())
+    buf = cipher.decryptor().update(base64.b64decode(data))
     try:
         return zlib.decompress(bytes.fromhex(str(buf[:-ord(buf[-1:])], 'utf-8')))
     except Exception:

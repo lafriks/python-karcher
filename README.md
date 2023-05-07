@@ -36,9 +36,9 @@ Commands:
 ```python
 from karcher.karcher import KarcherHome
 
-kh = KarcherHome()
-kh.login("user@email", "password")
-devices = hk.get_devices()
+kh = await KarcherHome.create()
+await kh.login("user@email", "password")
+devices = await hk.get_devices()
 ```
 
 ## License
