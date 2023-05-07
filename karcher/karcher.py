@@ -86,7 +86,7 @@ class KarcherHome:
             self._mqtt = None
 
         if self._http is not None:
-            if self._http_external:
+            if not self._http_external:
                 self._http.close()
             self._http = None
 
@@ -160,6 +160,7 @@ class KarcherHome:
 
     async def _process_response(self, resp: aiohttp.ClientResponse, prop=None) -> Any:
         if resp.status != 200:
+            resp.close()
             raise KarcherHomeException(-1,
                                        'HTTP error: ' + str(resp.status))
         data = await resp.json()
