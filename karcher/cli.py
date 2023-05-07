@@ -40,10 +40,10 @@ class GlobalContextObject:
             self,
             debug: int = 0,
             output: str = 'json',
-            region: Region = Region.EU):
+            country: str = 'GB'):
         self.debug = debug
         self.output = output
-        self.region = region
+        self.country = country
 
     def print(self, result):
         data_variable = getattr(result, 'data', None)
@@ -64,13 +64,12 @@ class GlobalContextObject:
     default='json',
     help='Output format. Default: "json"')
 @click.option(
-    '-r',
-    '--region',
-    type=click.Choice([Region.EU, Region.US, Region.CN]),
-    default=Region.EU,
-    help='Region of the server to query. Default: "eu"')
+    '-c',
+    '--country',
+    default='GB',
+    help='Country of the server to query. Default: "GB"')
 @click.pass_context
-def cli(ctx: click.Context, debug: int, output: str, region: Region):
+def cli(ctx: click.Context, debug: int, output: str, country: str):
     """Tool for connectiong and getting information from Kärcher Home Robots."""
     level = logging.INFO
     if debug > 0:
@@ -78,7 +77,7 @@ def cli(ctx: click.Context, debug: int, output: str, region: Region):
 
     logging.basicConfig(level=level)
 
-    ctx.obj = GlobalContextObject(debug=debug, output=output, region=region)
+    ctx.obj = GlobalContextObject(debug=debug, output=output, country=country.upper())
 
 
 def safe_cli():
@@ -96,9 +95,9 @@ def safe_cli():
 @click.pass_context
 @coro
 async def urls(ctx: click.Context):
-    """Get region information."""
+    """Get URL information."""
 
-    kh = await KarcherHome.create(region=ctx.obj.region)
+    kh = await KarcherHome.create(country=ctx.obj.country)
     d = await kh.get_urls()
 
     ctx.obj.print(d)
@@ -112,7 +111,7 @@ async def urls(ctx: click.Context):
 async def login(ctx: click.Context, username: str, password: str):
     """Get user session tokens."""
 
-    kh = await KarcherHome.create(region=ctx.obj.region)
+    kh = await KarcherHome.create(country=ctx.obj.country)
     ctx.obj.print(kh.login(username, password))
 
 
@@ -125,7 +124,7 @@ async def login(ctx: click.Context, username: str, password: str):
 async def devices(ctx: click.Context, username: str, password: str, auth_token: str):
     """List all devices."""
 
-    kh = await KarcherHome.create(region=ctx.obj.region)
+    kh = await KarcherHome.create(country=ctx.obj.country)
     if auth_token is not None:
         kh.login_token(auth_token, '')
     elif username is not None and password is not None:
@@ -160,7 +159,7 @@ async def device_properties(
         device_id: str):
     """Get device properties."""
 
-    kh = await KarcherHome.create(region=ctx.obj.region)
+    kh = await KarcherHome.create(country=ctx.obj.country)
     if auth_token is not None:
         kh.login_token(auth_token, mqtt_token)
     elif username is not None and password is not None:
