@@ -12,7 +12,6 @@ from functools import wraps
 
 from karcher.exception import KarcherHomeException
 from karcher.karcher import KarcherHome
-from karcher.consts import Region
 
 try:
     from rich import print as echo

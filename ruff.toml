@@ -4,3 +4,4 @@ extend-exclude = [
 
 [per-file-ignores]
 "tests/test_*.py" = ["E501"]
+"karcher/consts.py" = ["E501"]

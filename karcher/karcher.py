@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MIT
 # -----------------------------------------------------------
 
+import asyncio
 import collections
 import json
 import threading
@@ -14,8 +15,8 @@ import urllib.parse
 from .auth import Domains, Session
 from .countries import get_country_code, get_region_by_country
 from .consts import (
-    APP_VERSION_CODE, APP_VERSION_NAME, PROJECT_TYPE,
-    PROTOCOL_VERSION, REGION_URLS, ROBOT_PROPERTIES, TENANT_ID,
+    APP_VERSION_CODE, APP_VERSION_NAME, PROJECT_TYPE, PROTOCOL_VERSION,
+    REGION_URLS, ROBOT_PROPERTIES, SSL_CERTIFICATE_THUMBPRINT, TENANT_ID,
     Language, Region
 )
 from .device import Device, DeviceProperties
@@ -32,7 +33,11 @@ class KarcherHome:
     """Main class to access Karcher Home Robots API"""
 
     @classmethod
-    async def create(cls, country: str = 'GB', language: Language = Language.EN, session: aiohttp.ClientSession = None):
+    async def create(
+            cls,
+            country: str = 'GB',
+            language: Language = Language.EN,
+            session: aiohttp.ClientSession = None):
         """Create Karcher Home Robots API instance"""
 
         self = KarcherHome()
@@ -65,11 +70,13 @@ class KarcherHome:
         self._mqtt = None
         self._device_props = {}
         self._wait_events = {}
+        self._http = None
+        self._http_external = False
 
     def __del__(self):
         """Destructor"""
 
-        self.close()
+        asyncio.run(self.close())
 
     async def close(self):
         """Close underlying connections"""
@@ -133,8 +140,7 @@ class KarcherHome:
         headers['nonce'] = nonce
 
         kwargs['headers'] = headers
-        # TODO: Fix SSL
-        kwargs['verify_ssl'] = False
+        kwargs['ssl'] = aiohttp.Fingerprint(SSL_CERTIFICATE_THUMBPRINT)
         return await self._http.request(method, self._base_url + url, **kwargs)
 
     async def _download(self, url) -> bytes:
