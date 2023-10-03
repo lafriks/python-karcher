@@ -101,7 +101,7 @@ class DeviceProperties:
     main_brush: int = 0
     side_brush: int = 0
     mop_life: int = 0
-    net_status: DevicePropertiesNetwork = DevicePropertiesNetwork()
+    net_status: DevicePropertiesNetwork
     repeat_state: int = 0
     tank_state: int = 0
     cloth_state: int = 0
@@ -121,7 +121,7 @@ class DeviceProperties:
     charge_state: int = 0
     back_to_wash: int = 0
     break_charging: int = 0
-    order_total: DevicePropertiesOrderTotal = DevicePropertiesOrderTotal()
+    order_total: DevicePropertiesOrderTotal
     memory_map: int = 0
     current_map_id: int = 0
     map_num: int = 0
@@ -131,15 +131,19 @@ class DeviceProperties:
     quiet_begin_time: int = 0
     quiet_end_time: int = 0
     broken_clean: int = 0
-    privacy: DevicePropertiesPrivacy = DevicePropertiesPrivacy()
+    privacy: DevicePropertiesPrivacy
     cur_path: List[float]
     dust_action: int = 0
     voice_type: int = 0
-    quiet_status: DevicePropertiesQuiet = DevicePropertiesQuiet()
+    quiet_status: DevicePropertiesQuiet
     last_update_time: int = 0
 
     def __init__(self, **kwargs):
         setattr(self, 'cur_path', [])
+        setattr(self, 'net_stauts', DevicePropertiesNetwork())
+        setattr(self, 'order_total', DevicePropertiesOrderTotal())
+        setattr(self, 'privacy', DevicePropertiesPrivacy())
+        setattr(self, 'quiet_status', DevicePropertiesQuiet())
         self.update(kwargs)
 
     def update(self, data: dict[str, Any]) -> bool:
