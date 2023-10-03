@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MIT
 # -----------------------------------------------------------
 
-import asyncio
 import collections
 import json
 import threading
@@ -73,11 +72,6 @@ class KarcherHome:
         self._http = None
         self._http_external = False
 
-    def __del__(self):
-        """Destructor"""
-
-        asyncio.run(self.close())
-
     async def close(self):
         """Close underlying connections"""
 
@@ -114,22 +108,22 @@ class KarcherHome:
         data = ''
         if method == 'GET':
             params = kwargs.get('params') or {}
-            if type(params) == str:
+            if isinstance(params, str):
                 params = urllib.parse.parse_qs(params)
             buf = urllib.parse.urlencode(params)
             data = buf
             kwargs['params'] = buf
         elif method == 'POST' or method == 'PUT':
             v = params = kwargs.get('json') or {}
-            if type(v) == dict:
+            if isinstance(v, dict):
                 v = collections.OrderedDict(v.items())
                 for key, val in v.items():
                     data += key
                     if val is None:
                         data += 'null'
-                    elif type(val) == str:
+                    elif isinstance(val, str):
                         data += val
-                    elif type(val) == dict:
+                    elif isinstance(val, dict):
                         data += json.dumps(val, separators=(',', ':'))
                     else:
                         data += str(val)
@@ -174,7 +168,7 @@ class KarcherHome:
             return None
         # Handle special response types
         result = data['result']
-        if type(result) == str:
+        if isinstance(result, str):
             raise KarcherHomeException(-2, 'Invalid response: ' + result)
         if prop is not None:
             return json.loads(decrypt(result[prop]))

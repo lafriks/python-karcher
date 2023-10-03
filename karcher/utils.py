@@ -102,12 +102,12 @@ def snake_case(value: str) -> str:
 
 
 def snake_case_fields(data: str) -> str:
-    if type(data) is dict:
+    if isinstance(data, dict):
         n = {}
         for k, v in data.items():
             n[snake_case(k)] = snake_case_fields(v)
         return n
-    elif type(data) is list:
+    elif isinstance(data, list):
         n = []
         for v in data:
             n.append(snake_case_fields(v))

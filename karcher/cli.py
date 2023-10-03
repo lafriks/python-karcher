@@ -114,7 +114,7 @@ async def login(ctx: click.Context, username: str, password: str):
 
     kh = await KarcherHome.create(country=ctx.obj.country)
 
-    ctx.obj.print(kh.login(username, password))
+    ctx.obj.print(await kh.login(username, password))
 
     await kh.close()
 
