@@ -8,11 +8,13 @@
 
 ## Constants
 
+```
 wifiSSIDPrefix = "iPlus"
 projectType = "android_iot.karcher"
 tenantId = "1528983614213726208"
 version = "v1"
 zone = "GBR"
+```
 
 ### Products
 
