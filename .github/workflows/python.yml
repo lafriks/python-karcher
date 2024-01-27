@@ -10,10 +10,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
 
@@ -25,8 +25,8 @@ jobs:
 
       - name: Lint
         run: |
-          ruff --format=github --select=E9,F63,F7,F82 --target-version=py39 .
-          ruff --format=github --target-version=py39 .
+          ruff --output-format=github --select=E9,F63,F7,F82 --target-version=py39 .
+          ruff --output-format=github --target-version=py39 .
 
       - name: Test
         run: |
