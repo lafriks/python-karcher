@@ -380,7 +380,7 @@ class KarcherHome:
             return
 
         if 'thing/service/property/get_reply' in topic:
-            data = json.loads(msg)
+            data = json.loads(msg.decode('utf-8', 'surrogateescape'))
             if data['code'] != 0:
                 # TODO: handle error
                 return
