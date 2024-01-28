@@ -140,7 +140,7 @@ class DeviceProperties:
 
     def __init__(self, **kwargs):
         setattr(self, 'cur_path', [])
-        setattr(self, 'net_stauts', DevicePropertiesNetwork())
+        setattr(self, 'net_status', DevicePropertiesNetwork())
         setattr(self, 'order_total', DevicePropertiesOrderTotal())
         setattr(self, 'privacy', DevicePropertiesPrivacy())
         setattr(self, 'quiet_status', DevicePropertiesQuiet())
