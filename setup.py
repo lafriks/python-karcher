@@ -20,7 +20,7 @@ setup(
     install_requires=[
         'click',
         'aiohttp',
-        'paho-mqtt',
+        'paho-mqtt<2',
         'cryptography',
         'protobuf'
     ],
