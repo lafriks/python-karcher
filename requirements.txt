@@ -2,4 +2,4 @@ aiohttp >= 3.8
 protobuf >= 4.22
 click >= 8.1
 cryptography >= 40.0
-paho-mqtt >= 1.6
+paho-mqtt >= 1.6, < 2
